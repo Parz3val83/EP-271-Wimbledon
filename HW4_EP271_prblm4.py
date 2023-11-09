@@ -18,19 +18,19 @@ t_L = float(input("Enter T final: "))
 lseg = float(input("Enter the total range L: "))
 QK = float(input("Enter the Uniform Magnitude of Q/k: "))
 
-# initialize matrix
+# initialize matricies
 dones = np.ones(nseg + 1)
 minone = -np.ones(nseg)
 mymat = np.diag(2 * dones, 0) + np.diag(minone, -1) + np.diag(minone, 1)
-
 rhs1 = np.ones((nseg + 1, 1))
 rhs2 = np.ones((nseg + 1, 1))
-
 confirmation = np.ones((nseg + 1, 1))
-
 xvals = np.ones(nseg + 1)
+
+# define change in x
 deltaX = lseg / nseg
 
+# define matricy values
 for i in range(0, nseg + 1):
     rhs1[i, 0] = QK * deltaX**2
     rhs2[i, 0] = QK * math.exp(-(4*i/lseg - 2)**2)
@@ -44,6 +44,7 @@ mymat[0, 1] = 0
 mymat[nseg, nseg] = 1
 mymat[nseg, nseg - 1] = 0
 
+# solving both cases
 soln1 = np.linalg.solve(mymat, rhs1)
 soln2 = np.linalg.solve(mymat, rhs2)
 
@@ -51,11 +52,13 @@ soln2 = np.linalg.solve(mymat, rhs2)
 rhs1[:]=rhs1-np.dot(mymat,soln1)
 resmag=np.sqrt(np.dot(rhs1.T,rhs1))
 
+#defining the confirmation matrix
 for j in range(0, nseg):
     confirmation[j, 0] = t_0 + (t_L - t_0)*(xvals[j]/lseg) + 0.5*QK*xvals[j]*(lseg-xvals[j])
 
 #print("confirmation: ", confirmation)
 
+#plotting
 plt.plot(soln1, xvals)
 plt.xlabel("Length (m)")
 plt.ylabel("Temp (K)")
