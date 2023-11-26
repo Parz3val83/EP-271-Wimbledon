@@ -1,11 +1,11 @@
 import math 
-import planck
+#import planck
 import numpy as np
 
-t_1=planck.radiance(3,1)
+#t_1=planck.radiance(3,1)
 
 
-print("Actual Val" +"\n", t_1)
+#print("Actual Val" +"\n", t_1)
 
 interp=int(input("enter your interpolattion degree: "))
 interp_1= interp+1
@@ -17,28 +17,21 @@ table= np.ones(dim)
 
 frac= 0.5
 
-cord=0
 
 for i in range(0,row): #row  
 
-    initial=freq-frac*interp
+    initial=freq-frac
+    print(initial)
     
     for r in range(0,interp_1): # collumn
-                
-        if r== 0:
-                    
-            table[i,r]= initial
-            
-        if r%2==0:
-             r+=1
+              
+        if r==0:
+           table[i,r]=initial
         
-                    
         else:
-            table[i,r]=initial + frac
             
-                
-        initial+= frac
-        print(table)
+            table[i,r]= initial + 2*frac*r
+    
         
             
     frac*=1/2
