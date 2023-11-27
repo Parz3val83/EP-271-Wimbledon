@@ -1,0 +1,233 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+This Python module contains functions that fit different
+mathematical models to a set of data.
+"""
+
+def poly_fit(dataset,degree,plotit=False):
+    """
+    This Python 3 function performs polynomial fitting of the data
+    set that is passed through the dataset argument.  Optionally,
+    it displays a plot of the data and the fitted curve.
+    This function also prints the R^2 measure of the fit quality.
+
+    Parameters
+    ----------
+    dataset : 2D NumPy array of floating-point numbers
+        Dataset provides the independent-coordinate and dependent
+        variable for each data point with one data point per
+        row of the 2D array.
+    degree : integer
+        Degree determines the degree of the polynomial that is
+        used to fit the data.
+    plotit : Boolean (optional)
+        Plotit indicates whether to create a plot.
+
+    Returns
+    -------
+    coeffs : 1D NumPy array
+        The coeffs array returns the coefficients of the polynomial
+        fit, starting with the coefficient of the x^0 monomial and
+        ending with the x^degree monomial.
+    """
+    
+    import numpy as np
+    
+    # Get the number of points in the data set.
+    
+    ndata=dataset.shape[0]
+    
+    # Generate the matrix of terms that is sent to the least-squares
+    # NumPy function.  Note that the first column is 1, the second
+    # is the dataset independent coordinates to the first power (x_i^1),
+    # the third is x_i^2, and so on.
+
+    tmat=np.ones((ndata,degree+1))
+    for j in range (1,degree+1):
+        tmat[:,j]=dataset[:,0]*tmat[:,j-1]
+
+    # Use NumPy's lstsq function from its linalg module to solve
+    # the least-squares problem.
+
+    rhs=np.copy(dataset[:,1])  #  extracts the dependent-variable data
+#   coeffs=np.linalg.lstsq(tmat,rhs,rcond=-1.)[0]
+    coeffs=np.linalg.lstsq(tmat,rhs,rcond=None)[0]  #  For new linalg module
+    
+    # Compute and print the R^2 value.  Generate the model's predictions
+    # at the data's independent coordinates, then perform the R^2
+    # computation.
+
+    ymodel=np.zeros(ndata)
+    for pwr in range(degree+1):
+        ymodel+=coeffs[pwr]*dataset[:,0]**pwr
+    yave=np.mean(dataset[:,1])
+    r2=1-np.sum((ymodel-dataset[:,1])**2)/np.sum((yave-dataset[:,1])**2)
+    
+    print('\nThe R2 value of the degree %d polynomial fit is %14.8f.\n'
+          % (degree,r2))
+
+    # Peform the optional plotting if requested.  First, generate a curve
+    # to show the fit.
+
+    if plotit:
+        nplt=51  #  First generate a curve to show the fit.
+        xmin=np.min(dataset[:,0])
+        xmax=np.max(dataset[:,0])
+        xplt=np.linspace(xmin-(xmax-xmin)*0.02,xmax+(xmax-xmin)*0.02,nplt)
+        yplt=np.zeros(nplt)
+        for pwr in range(degree+1):
+            yplt+=coeffs[pwr]*xplt**pwr
+        fit_plot(dataset,xplt,yplt)
+        
+    return coeffs
+
+
+def exp_fit(dataset,plotit=False):
+    """
+    This Python 3 function performs exponential fitting of the data
+    set that is passed through the dataset argument.  Optionally,
+    it displays a plot of the data and the fitted curve.
+    This function also prints the R^2 measure of the fit quality.
+
+    Parameters
+    ----------
+    dataset : 2D NumPy array of floating-point numbers
+        Dataset provides the independent-coordinate and dependent
+        variable for each data point with one data point per
+        row of the 2D array.
+    plotit : Boolean (optional)
+        Plotit indicates whether to create a plot.
+
+    Returns
+    -------
+    coeffs : 1D NumPy array
+        The coeffs array returns the coefficients of the exponential
+        fit.  For the exponential model, K*exp(lambda*x), the
+        coeffs array is [K  lambda].
+    """
+    
+    import numpy as np
+    
+    # Get the number of points in the data set.
+    
+    ndata=dataset.shape[0]
+    
+    # Generate the matrix of terms that is sent to the least-squares
+    # NumPy function.  The least-squares equation is for ln(K) and
+    # lambda.  The rhs of the least-squares problem is the logarithm
+    # of the data's dependent-variable values.  The matrix of terms
+    # has 1 in the entire first column and the independent coordinate
+    # values in the second column.
+
+    tmat=np.ones((ndata,2))
+    tmat[:,1]=dataset[:,0]
+
+    # Use NumPy's lstsq function from its linalg module to solve
+    # the least-squares problem.
+
+    rhs=np.log(dataset[:,1])
+#   coeffs=np.linalg.lstsq(tmat,rhs,rcond=-1.)[0]
+    coeffs=np.linalg.lstsq(tmat,rhs,rcond=None)[0]  #  For new linalg module
+
+    coeffs[0]=np.exp(coeffs[0])  #  Undo the logarithm of K.
+    
+    # Compute and print the R^2 value.  Generate the model's predictions
+    # at the data's independent coordinates, then perform the R^2
+    # computation.
+
+    ymodel=coeffs[0]*np.exp(coeffs[1]*dataset[:,0])
+    yave=np.mean(dataset[:,1])
+    r2=1-np.sum((ymodel-dataset[:,1])**2)/np.sum((yave-dataset[:,1])**2)
+    
+    print('\nThe R2 value of the exponential fit is %14.8f.\n'
+          % (r2))
+
+    # Peform the optional plotting if requested.  First, generate a curve
+    # to show the fit.
+
+    if plotit:
+        nplt=51  #  First generate a curve to show the fit.
+        xmin=np.min(dataset[:,0])
+        xmax=np.max(dataset[:,0])
+        xplt=np.linspace(xmin-(xmax-xmin)*0.02,xmax+(xmax-xmin)*0.02,nplt)
+        yplt=np.zeros(nplt)
+        yplt=coeffs[0]*np.exp(coeffs[1]*xplt)
+        fit_plot(dataset,xplt,yplt)
+        
+    return coeffs
+
+
+def power_fit(dataset,plotit=False):
+    """
+    This Python 3 function performs power-law fitting of the data
+    set that is passed through the dataset argument.  Optionally,
+    it displays a plot of the data and the fitted curve.
+    This function also prints the R^2 measure of the fit quality.
+
+    Parameters
+    ----------
+    dataset : 2D NumPy array of floating-point numbers
+        Dataset provides the independent-coordinate and dependent
+        variable for each data point with one data point per
+        row of the 2D array.
+    plotit : Boolean (optional)
+        Plotit indicates whether to create a plot.
+
+    Returns
+    -------
+    coeffs : 1D NumPy array
+        The coeffs array returns the coefficients of the power-law
+        fit.  For the power-law model, K*x**alpha, the
+        coeffs array is [K  alpha].
+    """
+    
+    import numpy as np
+    
+    # Get the number of points in the data set.
+    
+    ndata=dataset.shape[0]
+    
+    # Generate the matrix of terms that is sent to the least-squares
+    # NumPy function.  The least-squares equation is for ln(K) and
+    # alpha.  The rhs of the least-squares problem is the logarithm
+    # of the data's dependent-variable values.  The matrix of terms
+    # has 1 in the entire first column and the logarithm of the
+    # independent coordinate values in the second column.
+
+    tmat=np.ones((ndata,2))
+    tmat[:,1]=np.log(dataset[:,0])
+
+    # Use NumPy's lstsq function from its linalg module to solve
+    # the least-squares problem.
+
+    rhs=np.log(dataset[:,1])
+#   coeffs=np.linalg.lstsq(tmat,rhs,rcond=-1.)[0]
+    coeffs=np.linalg.lstsq(tmat,rhs,rcond=None)[0]  #  For new linalg module
+
+    coeffs[0]=np.exp(coeffs[0])  #  Undo the logarithm of K.
+    
+    # Compute and print the R^2 value.  Generate the model's predictions
+    # at the data's independent coordinates, then perform the R^2
+    # computation.
+
+    ymodel=coeffs[0]*dataset[:,0]**coeffs[1]
+    yave=np.mean(dataset[:,1])
+    r2=1-np.sum((ymodel-dataset[:,1])**2)/np.sum((yave-dataset[:,1])**2)
+    
+    print('\nThe R2 value of the power-law fit is %14.8f.\n'
+          % (r2))
+
+    # Peform the optional plotting if requested.  First, generate a curve
+    # to show the fit.
+
+    if plotit:
+        nplt=51  #  First generate a curve to show the fit.
+        xmin=np.min(dataset[:,0])
+        xmax=np.max(dataset[:,0])
+        xplt=np.linspace(xmin-(xmax-xmin)*0.02,xmax+(xmax-xmin)*0.02,nplt)
+        yplt=np.zeros(nplt)
+        yplt=coeffs[0]*xplt**coeffs[1]
+        fit_plot(dataset,xplt,yplt)
+        
+    return coeffs
