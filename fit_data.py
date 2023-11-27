@@ -157,6 +157,55 @@ def exp_fit(dataset,plotit=False):
         
     return coeffs
 
+def gauss_fit(dataset,plotit=False):
+    """
+    This Python 3 function performs a normal distribution fitting of the data
+    set that is passed through the dataset argument.  Optionally,
+    it displays a plot of the data and the fitted curve.
+
+    Parameters
+    ----------
+    dataset : 2D NumPy array of floating-point numbers
+        Dataset provides the independent-coordinate and dependent
+        variable for each data point with one data point per
+        row of the 2D array.
+    plotit : Boolean (optional)
+        Plotit indicates whether to create a plot.
+
+    Returns
+    -------
+    coeffs : 1D NumPy array
+        The coeffs array returns the coefficients of the normal fit
+        fit.  For the normal-fit model, A * exp(-(x-Mu)**2/sigma**2), the
+        coeffs array is [A Mu sigma].
+    """
+
+    import numpy as np
+
+    #Generating the matrix to be optimized in X * P = Y
+    X = np.ones((dataset.shape[0],3))
+    X[:, 1] = dataset[:,0]
+    X[:, 2] = dataset[:,0]**2
+
+    #Solving for P and extracting the coefficients
+    params = np.linalg.lstsq(X, dataset[:,1], rcond=None)[0]
+
+    #Solving for A, mu, and sigma from params
+    A = np.exp(params[0] - (params[1]*0.5)**2)
+    mu = (-1/np.sqrtparams[2])*params[1]*0.5
+    sigma = 2*mu/params[1]
+
+    if plotit:
+        nplt=51  #  First generate a curve to show the fit.
+        xmin=np.min(dataset[:,0])
+        xmax=np.max(dataset[:,0])
+        xplt=np.linspace(xmin-(xmax-xmin)*0.02,xmax+(xmax-xmin)*0.02,nplt)
+        yplt=np.zeros(nplt)
+        yplt=A*np.exp(-(xplt-mu)**2/sigma**2)
+        fit_plot(dataset,xplt,yplt)
+
+    #if plotit: plt.show()
+    return(params)
 
 def power_fit(dataset,plotit=False):
     """
@@ -231,3 +280,42 @@ def power_fit(dataset,plotit=False):
         fit_plot(dataset,xplt,yplt)
         
     return coeffs
+
+
+def fit_plot(dataset,xfit,yfit):
+    """
+    This Python 3 function make a plot of the data and
+    a curve that represents the fitted data.
+
+    Parameters
+    ----------
+    dataset : 2D NumPy array of floating-point numbers
+        Dataset provides the independent-coordinate and dependent
+        variable for each data point with one data point per
+        row of the 2D array.
+    xfit : 1D NumPy array of floating-point numbers
+        Xfit holds the independent-coordinate values for the
+        fitted curve.
+    yfit : 1D NumPy array of floating-point numbers
+        Yfit holds the dependent-variable values for the
+        fitted curve.
+
+    Returns
+    -------
+    Nothing  (It generates the plot, however.)
+    """
+    
+    import matplotlib.pyplot as plt
+
+    plt.figure(figsize=[5.,4.])
+    plt.subplots_adjust(left=0.17,bottom=0.14,top=0.94,right=0.94)
+    plt.plot(dataset[:,0],dataset[:,1],'b*',markersize=8)
+    plt.plot(xfit,yfit,'r',linewidth=2)
+    plt.legend(['data points','fit'],fontsize=13)
+    plt.xlabel('X',fontsize=14)
+    plt.ylabel('Y',fontsize=14)
+    plt.xticks(fontsize=13)
+    plt.yticks(fontsize=13)
+    plt.show()
+    
+    return
