@@ -181,6 +181,8 @@ def gauss_fit(dataset,plotit=False):
     """
 
     import numpy as np
+    #Defining the gaussian function
+    
 
     #Generating the matrix to be optimized in X * P = Y
     X = np.ones((dataset.shape[0],3))
@@ -191,9 +193,9 @@ def gauss_fit(dataset,plotit=False):
     params = np.linalg.lstsq(X, dataset[:,1], rcond=None)[0]
 
     #Solving for A, mu, and sigma from params
-    A = np.exp(params[0] - (params[1]*0.5)**2)
-    mu = (-1/np.sqrtparams[2])*params[1]*0.5
-    sigma = 2*mu/params[1]
+    sigma = np.sqrt(-1/(params[2]))
+    mu = (params[1] * sigma)/2
+    A = np.exp(params[0] + (mu**2/sigma**2))
 
     if plotit:
         nplt=51  #  First generate a curve to show the fit.
@@ -201,11 +203,12 @@ def gauss_fit(dataset,plotit=False):
         xmax=np.max(dataset[:,0])
         xplt=np.linspace(xmin-(xmax-xmin)*0.02,xmax+(xmax-xmin)*0.02,nplt)
         yplt=np.zeros(nplt)
-        yplt=A*np.exp(-(xplt-mu)**2/sigma**2)
+        yplt=np.exp(-(x-mu)**2/sigma**2)
         fit_plot(dataset,xplt,yplt)
 
+    returns = [A, mu, sigma]
     #if plotit: plt.show()
-    return(params)
+    return(returns)
 
 def power_fit(dataset,plotit=False):
     """
